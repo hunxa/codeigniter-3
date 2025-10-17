@@ -1,5 +1,9 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+
+declare(strict_types=1);
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +27,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = '';
+$config['base_url'] = env('APP_URL', 'http://localhost:8080');
 
 /*
 |--------------------------------------------------------------------------
@@ -35,7 +39,7 @@ $config['base_url'] = '';
 | variable so that it is blank.
 |
 */
-$config['index_page'] = 'index.php';
+$config['index_page'] = env('APP_SHOW_INDEX', false) ? 'index.php' : '';
 
 /*
 |--------------------------------------------------------------------------
@@ -52,7 +56,7 @@ $config['index_page'] = 'index.php';
 |
 | WARNING: If you set this to 'PATH_INFO', URIs will always be URL-decoded!
 */
-$config['uri_protocol']	= 'REQUEST_URI';
+$config['uri_protocol'] = env('URI_PROTOCOL', 'REQUEST_URI');
 
 /*
 |--------------------------------------------------------------------------
@@ -66,7 +70,7 @@ $config['uri_protocol']	= 'REQUEST_URI';
 |
 | Note: This option is ignored for CLI requests.
 */
-$config['url_suffix'] = '';
+$config['url_suffix'] = env('APP_URL_SUFFIX', '');
 
 /*
 |--------------------------------------------------------------------------
@@ -78,7 +82,7 @@ $config['url_suffix'] = '';
 | than english.
 |
 */
-$config['language']	= 'english';
+$config['language'] = env('APP_LANGUAGE', 'english');
 
 /*
 |--------------------------------------------------------------------------
@@ -91,7 +95,7 @@ $config['language']	= 'english';
 | See https://secure.php.net/htmlspecialchars for a list of supported charsets.
 |
 */
-$config['charset'] = 'UTF-8';
+$config['charset'] = env('CHARSET', 'UTF-8');
 
 /*
 |--------------------------------------------------------------------------
@@ -102,7 +106,7 @@ $config['charset'] = 'UTF-8';
 | setting this variable to TRUE (boolean).  See the user guide for details.
 |
 */
-$config['enable_hooks'] = FALSE;
+$config['enable_hooks'] = env('ENABLE_HOOKS', false);
 
 /*
 |--------------------------------------------------------------------------
@@ -116,7 +120,7 @@ $config['enable_hooks'] = FALSE;
 | https://codeigniter.com/userguide3/general/creating_libraries.html
 |
 */
-$config['subclass_prefix'] = 'MY_';
+$config['subclass_prefix'] = env('SUBCLASS_PREFIX', 'MY_');
 
 /*
 |--------------------------------------------------------------------------
@@ -138,7 +142,7 @@ $config['subclass_prefix'] = 'MY_';
 | Note: This will NOT disable or override the CodeIgniter-specific
 |	autoloading (application/config/autoload.php)
 */
-$config['composer_autoload'] = FALSE;
+$config['composer_autoload'] = env('COMPOSER_AUTOLOAD', true);
 
 /*
 |--------------------------------------------------------------------------
@@ -162,7 +166,7 @@ $config['composer_autoload'] = FALSE;
 | Note: This option is ignored for CLI requests.
 |
 */
-$config['permitted_uri_chars'] = 'a-z 0-9~%.:_\-';
+$config['permitted_uri_chars'] = env('PERMITTED_URI_CHARS', 'a-z 0-9~%.:_\-');
 
 /*
 |--------------------------------------------------------------------------
@@ -186,10 +190,10 @@ $config['permitted_uri_chars'] = 'a-z 0-9~%.:_\-';
 | use segment based URLs.
 |
 */
-$config['enable_query_strings'] = FALSE;
-$config['controller_trigger'] = 'c';
-$config['function_trigger'] = 'm';
-$config['directory_trigger'] = 'd';
+$config['enable_query_strings'] = env('ENABLE_QUERY_STRINGS', false);
+$config['controller_trigger'] = env('CONTROLLER_TRIGGER', 'c');
+$config['function_trigger'] = env('FUNCTION_TRIGGER', 'm');
+$config['directory_trigger'] = env('DIRECTORY_TRIGGER', 'd');
 
 /*
 |--------------------------------------------------------------------------
@@ -213,7 +217,7 @@ $config['directory_trigger'] = 'd';
 | your log files will fill up very fast.
 |
 */
-$config['log_threshold'] = 0;
+$config['log_threshold'] = (int) env('LOG_THRESHOLD', 0);
 
 /*
 |--------------------------------------------------------------------------
@@ -224,7 +228,7 @@ $config['log_threshold'] = 0;
 | application/logs/ directory. Use a full server path.
 |
 */
-$config['log_path'] = '';
+$config['log_path'] = env('LOG_PATH', '');
 
 /*
 |--------------------------------------------------------------------------
@@ -235,7 +239,7 @@ $config['log_path'] = '';
 | 'log-'.date('Y-m-d').'.php'. No DIRECTORY_SEPARATOR(s), just the filename.
 |
 */
-$config['log_filename'] = '';
+$config['log_filename'] = env('LOG_FILENAME', '');
 
 /*
 |--------------------------------------------------------------------------
@@ -247,7 +251,7 @@ $config['log_filename'] = '';
 | IMPORTANT: This MUST be an integer (no quotes) and you MUST use octal
 |            integer notation (i.e. 0700, 0644, etc.)
 */
-$config['log_file_permissions'] = 0644;
+$config['log_file_permissions'] = (int) env('LOG_FILE_PERMISSIONS', 0644);
 
 /*
 |--------------------------------------------------------------------------
@@ -258,7 +262,7 @@ $config['log_file_permissions'] = 0644;
 | codes to set your own date formatting
 |
 */
-$config['log_date_format'] = 'Y-m-d H:i:s';
+$config['log_date_format'] = env('LOG_DATE_FORMAT', 'Y-m-d H:i:s');
 
 /*
 |--------------------------------------------------------------------------
@@ -269,7 +273,7 @@ $config['log_date_format'] = 'Y-m-d H:i:s';
 | application/views/errors/ directory.  Use a full server path.
 |
 */
-$config['error_views_path'] = '';
+$config['error_views_path'] = env('ERROR_VIEWS_PATH', '');
 
 /*
 |--------------------------------------------------------------------------
@@ -280,7 +284,7 @@ $config['error_views_path'] = '';
 | application/cache/ directory.  Use a full server path.
 |
 */
-$config['cache_path'] = '';
+$config['cache_path'] = env('CACHE_PATH', '');
 
 /*
 |--------------------------------------------------------------------------
@@ -298,7 +302,7 @@ $config['cache_path'] = '';
 |	             of query parameters.
 |
 */
-$config['cache_query_string'] = FALSE;
+$config['cache_query_string'] = env('CACHE_QUERY_STRING', false);
 
 /*
 |--------------------------------------------------------------------------
@@ -311,7 +315,7 @@ $config['cache_query_string'] = FALSE;
 | https://codeigniter.com/userguide3/libraries/encryption.html
 |
 */
-$config['encryption_key'] = '';
+$config['encryption_key'] = env('APP_KEY', '');
 
 /*
 |--------------------------------------------------------------------------
@@ -368,14 +372,14 @@ $config['encryption_key'] = '';
 | except for 'cookie_prefix' and 'cookie_httponly', which are ignored here.
 |
 */
-$config['sess_driver'] = 'files';
-$config['sess_cookie_name'] = 'ci_session';
-$config['sess_samesite'] = 'Lax';
-$config['sess_expiration'] = 7200;
-$config['sess_save_path'] = NULL;
-$config['sess_match_ip'] = FALSE;
-$config['sess_time_to_update'] = 300;
-$config['sess_regenerate_destroy'] = FALSE;
+$config['sess_driver'] = env('SESSION_DRIVER', 'files');
+$config['sess_cookie_name'] = env('SESSION_COOKIE_NAME', str_replace(' ', '-', strtolower(env('APP_NAME', 'CodeIgniter'))) . '_session');
+$config['sess_samesite'] = env('SESSION_SAMESITE', 'Lax');
+$config['sess_expiration'] = (int) env('SESSION_EXPIRATION', 7200);
+$config['sess_save_path'] = env('SESSION_SAVE_PATH', null);
+$config['sess_match_ip'] = env('SESSION_MATCH_IP', false);
+$config['sess_time_to_update'] = (int) env('SESSION_TIME_TO_UPDATE', 300);
+$config['sess_regenerate_destroy'] = env('SESSION_REGENERATE_DESTROY', false);
 
 /*
 |--------------------------------------------------------------------------
@@ -393,12 +397,12 @@ $config['sess_regenerate_destroy'] = FALSE;
 |       'cookie_httponly') will also affect sessions.
 |
 */
-$config['cookie_prefix']	= '';
-$config['cookie_domain']	= '';
-$config['cookie_path']		= '/';
-$config['cookie_secure']	= FALSE;
-$config['cookie_httponly'] 	= FALSE;
-$config['cookie_samesite'] 	= 'Lax';
+$config['cookie_prefix'] = env('COOKIE_PREFIX', '');
+$config['cookie_domain'] = env('COOKIE_DOMAIN', '');
+$config['cookie_path'] = env('COOKIE_PATH', '/');
+$config['cookie_secure'] = env('COOKIE_SECURE', false);
+$config['cookie_httponly'] = env('COOKIE_HTTPONLY', false);
+$config['cookie_samesite'] = env('COOKIE_SAMESITE', 'Lax');
 
 /*
 |--------------------------------------------------------------------------
@@ -414,12 +418,12 @@ $config['cookie_samesite'] 	= 'Lax';
 | 'csrf_regenerate' = Regenerate token on every submission
 | 'csrf_exclude_uris' = Array of URIs which ignore CSRF checks
 */
-$config['csrf_protection'] = FALSE;
-$config['csrf_token_name'] = 'csrf_test_name';
-$config['csrf_cookie_name'] = 'csrf_cookie_name';
-$config['csrf_expire'] = 7200;
-$config['csrf_regenerate'] = TRUE;
-$config['csrf_exclude_uris'] = array();
+$config['csrf_protection'] = env('CSRF_PROTECTION', false);
+$config['csrf_token_name'] = env('CSRF_TOKEN_NAME', 'csrf_test_name');
+$config['csrf_cookie_name'] = env('CSRF_COOKIE_NAME', 'csrf_cookie_name');
+$config['csrf_expire'] = (int) env('CSRF_EXPIRE', 7200);
+$config['csrf_regenerate'] = env('CSRF_REGENERATE', true);
+$config['csrf_exclude_uris'] = env('CSRF_EXCLUDE_URIS', []);
 
 /*
 |--------------------------------------------------------------------------
@@ -441,7 +445,7 @@ $config['csrf_exclude_uris'] = array();
 | by the output class.  Do not 'echo' any values with compression enabled.
 |
 */
-$config['compress_output'] = FALSE;
+$config['compress_output'] = env('COMPRESS_OUTPUT', false);
 
 /*
 |--------------------------------------------------------------------------
@@ -454,7 +458,7 @@ $config['compress_output'] = FALSE;
 | helper' page of the user guide for information regarding date handling.
 |
 */
-$config['time_reference'] = 'local';
+$config['time_reference'] = env('TIME_REFERENCE', 'local');
 
 /*
 |--------------------------------------------------------------------------
@@ -472,4 +476,4 @@ $config['time_reference'] = 'local';
 | Comma-separated:	'10.0.1.200,192.168.5.0/24'
 | Array:		array('10.0.1.200', '192.168.5.0/24')
 */
-$config['proxy_ips'] = '';
+$config['proxy_ips'] = env('PROXY_IPS', '');
