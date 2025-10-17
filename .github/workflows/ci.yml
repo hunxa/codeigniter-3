@@ -73,11 +73,11 @@ jobs:
         fi
         echo "✓ system directory exists"
         
-        if [ ! -f "index.php" ]; then
-          echo "❌ 'index.php' not found"
+        if [ ! -f "public/index.php" ]; then
+          echo "❌ 'public/index.php' not found"
           exit 1
         fi
-        echo "✓ index.php exists"
+        echo "✓ public/index.php exists"
         
         # Check application subdirectories
         required_dirs=("controllers" "models" "views" "config" "core" "helpers" "libraries")
