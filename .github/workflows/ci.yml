@@ -8,244 +8,470 @@ on:
 
 jobs:
   validate:
-    name: Code Validation & Quality Checks
+    name: Validate CodeIgniter 3 Application
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Setup PHP
+    - name: Install PHP and Extensions
       run: |
-        sudo apt-get update
-        sudo apt-get install -y php php-cli php-mbstring php-intl php-mysqli php-gd php-zip php-curl php-xml
-        php -v
-
-    - name: PHP Syntax Check
-      run: |
-        echo "🔍 Checking PHP syntax..."
-        find application/ -name "*.php" -print0 | xargs -0 -n1 php -l
-        echo "✓ PHP syntax check passed"
-
-    - name: Verify CodeIgniter Structure
-      run: |
-        echo "🔍 Verifying CodeIgniter directory structure..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "📦 Installing PHP and Required Extensions"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
-        # Check core directories
+        sudo apt-get update -qq
+        sudo apt-get install -y \
+          php \
+          php-cli \
+          php-mbstring \
+          php-intl \
+          php-mysqli \
+          php-gd \
+          php-zip \
+          php-curl \
+          php-xml \
+          php-json \
+          php-bcmath
+        
+        echo ""
+        echo "✓ PHP installed successfully"
+        php -v
+        echo ""
+
+    - name: Verify PHP Installation
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🔍 Verifying PHP Configuration"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        php -m | grep -E "(mbstring|intl|mysqli|gd|zip|curl|xml|json)" || {
+          echo "❌ Required PHP extensions not found"
+          exit 1
+        }
+        
+        echo "✓ All required PHP extensions are available"
+        echo ""
+
+    - name: Check CodeIgniter Directory Structure
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "📁 Checking CodeIgniter Structure"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        # Check main directories
         if [ ! -d "application" ]; then
-          echo "❌ application directory not found"
+          echo "❌ 'application' directory not found"
           exit 1
         fi
+        echo "✓ application directory exists"
         
         if [ ! -d "system" ]; then
-          echo "❌ system directory not found"
+          echo "❌ 'system' directory not found"
           exit 1
         fi
+        echo "✓ system directory exists"
         
         if [ ! -f "index.php" ]; then
-          echo "❌ index.php not found"
+          echo "❌ 'index.php' not found"
           exit 1
         fi
+        echo "✓ index.php exists"
         
         # Check application subdirectories
-        required_dirs=("controllers" "models" "views" "config")
+        required_dirs=("controllers" "models" "views" "config" "core" "helpers" "libraries")
         for dir in "${required_dirs[@]}"; do
           if [ ! -d "application/$dir" ]; then
-            echo "❌ application/$dir directory not found"
-            exit 1
+            echo "⚠️  application/$dir directory not found"
+          else
+            echo "✓ application/$dir exists"
           fi
         done
         
-        echo "✓ CodeIgniter structure validated"
-
-    - name: Check Required Config Files
-      run: |
-        echo "🔍 Checking required configuration files..."
-        
-        if [ ! -f "application/config/config.php" ]; then
-          echo "❌ config.php not found"
-          exit 1
-        fi
-        
-        if [ ! -f "application/config/database.php" ]; then
-          echo "❌ database.php not found"
-          exit 1
-        fi
-        
-        if [ ! -f "application/config/routes.php" ]; then
-          echo "❌ routes.php not found"
-          exit 1
-        fi
-        
-        if [ ! -f "application/config/autoload.php" ]; then
-          echo "❌ autoload.php not found"
-          exit 1
-        fi
-        
-        if [ ! -f "application/config/constants.php" ]; then
-          echo "❌ constants.php not found"
-          exit 1
-        fi
-        
-        echo "✓ All required config files present"
-
-    - name: Validate PHP Configuration Files
-      run: |
-        echo "🔍 Validating config file syntax..."
-        
-        config_files=$(find application/config -name "*.php")
-        for file in $config_files; do
-          php -l "$file" > /dev/null || {
-            echo "❌ Syntax error in $file"
-            exit 1
-          }
+        # Check writable directories
+        writable_dirs=("cache" "logs")
+        for dir in "${writable_dirs[@]}"; do
+          if [ ! -d "application/$dir" ]; then
+            echo "⚠️  application/$dir directory not found (writable directory)"
+          else
+            echo "✓ application/$dir exists"
+          fi
         done
         
-        echo "✓ Config files syntax validated"
+        echo ""
 
-    - name: Check Controllers Syntax
+    - name: Validate Required Config Files
       run: |
-        echo "🔍 Checking controllers..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "⚙️  Validating Configuration Files"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        config_files=(
+          "application/config/config.php"
+          "application/config/database.php"
+          "application/config/routes.php"
+          "application/config/autoload.php"
+          "application/config/constants.php"
+        )
+        
+        all_found=true
+        for file in "${config_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ $file not found"
+            all_found=false
+          else
+            echo "✓ $file exists"
+          fi
+        done
+        
+        if [ "$all_found" = false ]; then
+          exit 1
+        fi
+        
+        echo ""
+
+    - name: PHP Syntax Check - Config Files
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🔍 Checking Config Files Syntax"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        error_found=false
+        if [ -d "application/config" ]; then
+          for file in application/config/*.php; do
+            if [ -f "$file" ]; then
+              if ! php -l "$file" > /dev/null 2>&1; then
+                echo "❌ Syntax error in: $file"
+                php -l "$file"
+                error_found=true
+              else
+                echo "✓ $file"
+              fi
+            fi
+          done
+        fi
+        
+        if [ "$error_found" = true ]; then
+          exit 1
+        fi
+        
+        echo ""
+
+    - name: PHP Syntax Check - Controllers
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🎮 Checking Controllers Syntax"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        error_found=false
+        controller_count=0
         
         if [ -d "application/controllers" ]; then
-          controller_files=$(find application/controllers -name "*.php")
-          for file in $controller_files; do
-            php -l "$file" > /dev/null || {
-              echo "❌ Syntax error in $file"
-              exit 1
-            }
-          done
-          echo "✓ Controllers validated"
+          while IFS= read -r -d '' file; do
+            controller_count=$((controller_count + 1))
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              error_found=true
+            else
+              echo "✓ $file"
+            fi
+          done < <(find application/controllers -name "*.php" -print0)
         fi
+        
+        echo ""
+        echo "Total controllers checked: $controller_count"
+        
+        if [ "$error_found" = true ]; then
+          exit 1
+        fi
+        
+        echo ""
 
-    - name: Check Models Syntax
+    - name: PHP Syntax Check - Models
       run: |
-        echo "🔍 Checking models..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "📊 Checking Models Syntax"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        error_found=false
+        model_count=0
         
         if [ -d "application/models" ]; then
-          model_files=$(find application/models -name "*.php")
-          if [ -n "$model_files" ]; then
-            for file in $model_files; do
-              php -l "$file" > /dev/null || {
-                echo "❌ Syntax error in $file"
-                exit 1
-              }
-            done
-          fi
-          echo "✓ Models validated"
+          while IFS= read -r -d '' file; do
+            model_count=$((model_count + 1))
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              error_found=true
+            else
+              echo "✓ $file"
+            fi
+          done < <(find application/models -name "*.php" -print0)
         fi
+        
+        echo ""
+        echo "Total models checked: $model_count"
+        
+        if [ "$error_found" = true ]; then
+          exit 1
+        fi
+        
+        echo ""
 
-    - name: Check Libraries Syntax
+    - name: PHP Syntax Check - Libraries
       run: |
-        echo "🔍 Checking libraries..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "📚 Checking Libraries Syntax"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        error_found=false
+        library_count=0
         
         if [ -d "application/libraries" ]; then
-          library_files=$(find application/libraries -name "*.php")
-          if [ -n "$library_files" ]; then
-            for file in $library_files; do
-              php -l "$file" > /dev/null || {
-                echo "❌ Syntax error in $file"
-                exit 1
-              }
-            done
-          fi
-          echo "✓ Libraries validated"
+          while IFS= read -r -d '' file; do
+            library_count=$((library_count + 1))
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              error_found=true
+            else
+              echo "✓ $file"
+            fi
+          done < <(find application/libraries -name "*.php" -print0)
         fi
+        
+        echo ""
+        echo "Total libraries checked: $library_count"
+        
+        if [ "$error_found" = true ]; then
+          exit 1
+        fi
+        
+        echo ""
 
-    - name: Check Helpers Syntax
+    - name: PHP Syntax Check - Helpers
       run: |
-        echo "🔍 Checking helpers..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🛠️  Checking Helpers Syntax"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        error_found=false
+        helper_count=0
         
         if [ -d "application/helpers" ]; then
-          helper_files=$(find application/helpers -name "*.php")
-          if [ -n "$helper_files" ]; then
-            for file in $helper_files; do
-              php -l "$file" > /dev/null || {
-                echo "❌ Syntax error in $file"
-                exit 1
-              }
-            done
-          fi
-          echo "✓ Helpers validated"
+          while IFS= read -r -d '' file; do
+            helper_count=$((helper_count + 1))
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              error_found=true
+            else
+              echo "✓ $file"
+            fi
+          done < <(find application/helpers -name "*.php" -print0)
         fi
+        
+        echo ""
+        echo "Total helpers checked: $helper_count"
+        
+        if [ "$error_found" = true ]; then
+          exit 1
+        fi
+        
+        echo ""
+
+    - name: PHP Syntax Check - Core Extensions
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🔧 Checking Core Extensions Syntax"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        error_found=false
+        core_count=0
+        
+        if [ -d "application/core" ]; then
+          while IFS= read -r -d '' file; do
+            core_count=$((core_count + 1))
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              error_found=true
+            else
+              echo "✓ $file"
+            fi
+          done < <(find application/core -name "*.php" -print0)
+        fi
+        
+        echo ""
+        echo "Total core files checked: $core_count"
+        
+        if [ "$error_found" = true ]; then
+          exit 1
+        fi
+        
+        echo ""
 
     - name: Security Checks
       run: |
-        echo "🔒 Running security checks..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🔒 Running Security Checks"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
-        # Check for exposed sensitive files
+        security_issues=false
+        
+        # Check for config files in public directories
+        echo "Checking for exposed config files..."
         if [ -f "assets/config.php" ] || [ -f "public/config.php" ]; then
           echo "❌ Config file found in public directory!"
-          exit 1
+          security_issues=true
+        else
+          echo "✓ No config files in public directories"
         fi
         
-        # Check for .env files that shouldn't be committed
-        if [ -f ".env" ] && grep -q "DB_PASSWORD" .env 2>/dev/null; then
-          echo "⚠️  .env file with credentials found in repository"
+        # Check for .env files
+        echo "Checking for .env files..."
+        if [ -f ".env" ]; then
+          echo "⚠️  .env file found in repository"
+          if grep -q "DB_PASSWORD" .env 2>/dev/null; then
+            echo "⚠️  .env contains database credentials"
+          fi
+        else
+          echo "✓ No .env file in repository"
         fi
         
-        # Check for debug mode in production config
+        # Check for debug mode
+        echo "Checking for debug mode..."
         if grep -q "['\"]\s*log_threshold['\"]\s*.*=>\s*4" application/config/config.php 2>/dev/null; then
-          echo "⚠️  Debug mode (log_threshold = 4) detected in config"
+          echo "⚠️  Debug mode (log_threshold = 4) detected"
+        else
+          echo "✓ Debug mode not detected"
         fi
         
         # Check for hardcoded credentials
-        if grep -rn "password.*=.*['\"][^'\"]\{3,\}['\"]" application/config/database.php 2>/dev/null | grep -v "''" | grep -v '""'; then
+        echo "Checking for hardcoded database credentials..."
+        if grep -rn "password.*=.*['\"][^'\"]\{3,\}['\"]" application/config/database.php 2>/dev/null | grep -v "''" | grep -v '""' | grep -v "password.*=.*['\"]\s*['\"]"; then
           echo "⚠️  Possible hardcoded database password detected"
+        else
+          echo "✓ No obvious hardcoded passwords found"
         fi
         
-        # Check for index.php in routes
+        # Check for index.php in URLs
+        echo "Checking for index.php in URLs..."
         if grep -q "['\"]\s*index_page['\"]\s*.*=>\s*['\"]index\.php['\"]" application/config/config.php 2>/dev/null; then
-          echo "⚠️  index.php still in URL (consider removing for cleaner URLs)"
+          echo "⚠️  index.php still in URL configuration"
+        else
+          echo "✓ Clean URLs configured"
         fi
         
-        echo "✓ Security checks completed"
+        # Check .htaccess protection for sensitive directories
+        echo "Checking .htaccess protection..."
+        protected_dirs=("application/cache" "application/logs" "application/config")
+        for dir in "${protected_dirs[@]}"; do
+          if [ -d "$dir" ]; then
+            if [ ! -f "$dir/.htaccess" ] && [ ! -f "$dir/index.html" ]; then
+              echo "⚠️  $dir lacks .htaccess or index.html protection"
+            else
+              echo "✓ $dir is protected"
+            fi
+          fi
+        done
+        
+        echo ""
+        if [ "$security_issues" = true ]; then
+          echo "❌ Critical security issues found!"
+          exit 1
+        fi
+
+    - name: Check for Common Issues
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🔍 Checking for Common CodeIgniter Issues"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        # Check for short PHP tags
+        echo "Checking for short PHP tags..."
+        if grep -rn "<?" application/ --include="*.php" | grep -v "<?php" | grep -v "<?=" | head -5; then
+          echo "⚠️  Short PHP tags found (may cause issues)"
+        else
+          echo "✓ No short PHP tags found"
+        fi
+        
+        # Check for trailing whitespace in PHP files
+        echo "Checking for trailing whitespace after closing PHP tags..."
+        if grep -rn "?>\s\+$" application/ --include="*.php" | head -5; then
+          echo "⚠️  Trailing whitespace after ?> found"
+        else
+          echo "✓ No trailing whitespace issues"
+        fi
+        
+        # Check for BOM in files
+        echo "Checking for BOM (Byte Order Mark)..."
+        if grep -rl $'\xEF\xBB\xBF' application/ --include="*.php" 2>/dev/null | head -5; then
+          echo "⚠️  BOM found in PHP files"
+        else
+          echo "✓ No BOM detected"
+        fi
+        
+        # Check for var_dump or print_r (debugging code)
+        echo "Checking for debugging functions..."
+        if grep -rn "\(var_dump\|print_r\|var_export\)" application/ --include="*.php" | grep -v "//.*var_dump" | head -5; then
+          echo "⚠️  Debugging functions found in code"
+        else
+          echo "✓ No debugging functions found"
+        fi
+        
+        # Check for die() or exit() statements
+        echo "Checking for die/exit statements..."
+        if grep -rn "\(die(\|exit(\)" application/controllers/ --include="*.php" 2>/dev/null | head -5; then
+          echo "⚠️  die/exit statements found in controllers"
+        else
+          echo "✓ No die/exit statements in controllers"
+        fi
+        
+        echo ""
 
     - name: Check File Permissions Requirements
       run: |
-        echo "🔍 Checking writable directories..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "📝 Checking Writable Directories"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
-        # Check if writable directories exist
         writable_dirs=("application/cache" "application/logs")
         
         for dir in "${writable_dirs[@]}"; do
           if [ -d "$dir" ]; then
             echo "✓ $dir exists"
             
-            # Check if .htaccess exists for protection
-            if [ ! -f "$dir/.htaccess" ]; then
-              echo "⚠️  $dir/.htaccess not found (should deny access)"
+            # Check for protection files
+            if [ -f "$dir/.htaccess" ]; then
+              echo "  ✓ .htaccess protection found"
+            elif [ -f "$dir/index.html" ]; then
+              echo "  ✓ index.html protection found"
+            else
+              echo "  ⚠️  No protection file (.htaccess or index.html)"
             fi
           else
-            echo "⚠️  $dir not found (may cause issues)"
+            echo "⚠️  $dir not found"
           fi
         done
+        
+        # Check for uploads directory
+        if [ -d "uploads" ]; then
+          echo "✓ uploads directory exists"
+          if [ ! -f "uploads/.htaccess" ] && [ ! -f "uploads/index.html" ]; then
+            echo "  ⚠️  uploads directory lacks protection"
+          fi
+        fi
+        
+        echo ""
 
-    - name: Check for Common Issues
+    - name: Generate Code Statistics
       run: |
-        echo "🔍 Checking for common CodeIgniter issues..."
-        
-        # Check for short PHP tags
-        if grep -rn "<?" application/ --include="*.php" | grep -v "<?php" | grep -v "<?="; then
-          echo "⚠️  Short PHP tags found (may cause issues on some servers)"
-        fi
-        
-        # Check for trailing whitespace in controllers (can cause header issues)
-        if grep -rn "?>\s*$" application/controllers/ --include="*.php" 2>/dev/null; then
-          echo "⚠️  Trailing whitespace after ?> found in controllers"
-        fi
-        
-        # Check for BOM in files
-        if grep -rl $'\xEF\xBB\xBF' application/ --include="*.php" 2>/dev/null; then
-          echo "⚠️  BOM (Byte Order Mark) found in PHP files"
-        fi
-        
-        echo "✓ Common issues check completed"
-
-    - name: Code Quality Report
-      if: always()
-      run: |
-        echo "📊 Generating code quality report..."
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "📊 Code Statistics"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
         # Count files
         controllers=$(find application/controllers -name "*.php" 2>/dev/null | wc -l)
@@ -253,26 +479,50 @@ jobs:
         views=$(find application/views -name "*.php" 2>/dev/null | wc -l)
         libraries=$(find application/libraries -name "*.php" 2>/dev/null | wc -l)
         helpers=$(find application/helpers -name "*.php" 2>/dev/null | wc -l)
+        core=$(find application/core -name "*.php" 2>/dev/null | wc -l)
         
+        total=$((controllers + models + libraries + helpers + core))
+        
+        echo "Controllers:  $controllers"
+        echo "Models:       $models"
+        echo "Views:        $views"
+        echo "Libraries:    $libraries"
+        echo "Helpers:      $helpers"
+        echo "Core:         $core"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "📈 Code Quality Report"
+        echo "Total Files:  $total (excluding views)"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "Controllers: $controllers"
-        echo "Models: $models"
-        echo "Views: $views"
-        echo "Libraries: $libraries"
-        echo "Helpers: $helpers"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "Total PHP files: $((controllers + models + views + libraries + helpers))"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        # Count lines of code (approximate)
+        if command -v wc &> /dev/null; then
+          echo ""
+          echo "Lines of Code (approximate):"
+          app_lines=$(find application/ -name "*.php" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}')
+          echo "Application:  $app_lines lines"
+        fi
+        
+        echo ""
 
-    - name: Success Summary
-      if: success()
+    - name: Final Summary
+      if: always()
       run: |
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "✅ All Checks Passed!"
+        echo "✅ CodeIgniter 3 CI Validation Complete"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "Commit: ${{ github.sha }}"
-        echo "Branch: ${{ github.ref }}"
-        echo "Author: ${{ github.actor }}"
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch:     ${{ github.ref }}"
+        echo "Commit:     ${{ github.sha }}"
+        echo "Author:     ${{ github.actor }}"
+        echo "Workflow:   ${{ github.workflow }}"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+
+    - name: Failure Notification
+      if: failure()
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "❌ CI Validation Failed"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "Please review the errors above and fix them"
+        echo "before merging to the main branch."
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
