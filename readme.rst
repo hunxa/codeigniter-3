@@ -2,6 +2,50 @@
 What is CodeIgniter
 ###################
 
+.. image:: https://img.shields.io/github/actions/workflow/status/hunxa/codeigniter-3/ci.yml?branch=main&label=CI&logo=github
+   :target: https://github.com/hunxa/codeigniter-3/actions
+   :alt: CI Status
+
+.. image:: https://img.shields.io/github/v/release/hunxa/codeigniter-3?label=Release&logo=github
+   :target: https://github.com/hunxa/codeigniter-3/releases
+   :alt: Latest Release
+
+.. image:: https://img.shields.io/github/license/hunxa/codeigniter-3?label=License
+   :target: https://github.com/hunxa/codeigniter-3/blob/main/license.txt
+   :alt: License
+
+.. image:: https://img.shields.io/github/stars/hunxa/codeigniter-3?style=social
+   :target: https://github.com/hunxa/codeigniter-3/stargazers
+   :alt: GitHub Stars
+
+.. image:: https://img.shields.io/github/forks/hunxa/codeigniter-3?style=social
+   :target: https://github.com/hunxa/codeigniter-3/network/members
+   :alt: GitHub Forks
+
+.. image:: https://img.shields.io/github/issues/hunxa/codeigniter-3?label=Issues
+   :target: https://github.com/hunxa/codeigniter-3/issues
+   :alt: GitHub Issues
+
+.. image:: https://img.shields.io/github/issues-pr/hunxa/codeigniter-3?label=Pull%20Requests
+   :target: https://github.com/hunxa/codeigniter-3/pulls
+   :alt: GitHub Pull Requests
+
+.. image:: https://img.shields.io/github/last-commit/hunxa/codeigniter-3?label=Last%20Commit
+   :target: https://github.com/hunxa/codeigniter-3/commits/main
+   :alt: Last Commit
+
+.. image:: https://img.shields.io/github/contributors/hunxa/codeigniter-3?label=Contributors
+   :target: https://github.com/hunxa/codeigniter-3/graphs/contributors
+   :alt: Contributors
+
+.. image:: https://img.shields.io/badge/PHP-%3E%3D%205.6-blue?logo=php
+   :target: https://www.php.net/
+   :alt: PHP Version
+
+.. image:: https://img.shields.io/badge/CodeIgniter-3.x-orange?logo=codeigniter
+   :target: https://codeigniter.com/
+   :alt: CodeIgniter Version
+
 CodeIgniter is an Application Development Framework - a toolkit - for people
 who build web sites using PHP. Its goal is to enable you to develop projects
 much faster than you could if you were writing code from scratch, by providing
@@ -14,20 +58,23 @@ for a given task.
 CodeIgniter 3
 *************
 
-This repository is for the legacy version, CodeIgniter 3.
-`CodeIgniter 4 <https://github.com/codeigniter4/CodeIgniter4>`_ is the latest
-version of the framework.
+This repository is a maintained fork of CodeIgniter 3, the legacy version of the framework.
 
-CodeIgniter 3 is the legacy version of the framework, intended for use with PHP
-5.6+. This version is in maintenance, receiving mostly just security updates.
+`CodeIgniter 4 <https://github.com/codeigniter4/CodeIgniter4>`_ is the latest
+version of the framework, while this repository focuses on maintaining and improving
+CodeIgniter 3 for projects that require PHP 5.6+ compatibility.
+
+CodeIgniter 3 is intended for use with PHP 5.6+ and continues to receive security
+updates and community improvements through this repository.
 
 *******************
 Release Information
 *******************
 
-This repo contains in-development code for future releases. To download the
-latest stable release please visit the `CodeIgniter Downloads
-<https://codeigniter.com/download>`_ page.
+This repo contains the maintained version of CodeIgniter 3. For the official releases,
+please visit the `CodeIgniter Downloads <https://codeigniter.com/download>`_ page.
+
+For this fork's releases and updates, check the `Releases section <https://github.com/hunxa/codeigniter-3/releases>`_.
 
 **************************
 Changelog and New Features
@@ -35,6 +82,8 @@ Changelog and New Features
 
 You can find a list of all changes for each release in the `user
 guide change log <https://github.com/bcit-ci/CodeIgniter/blob/develop/user_guide_src/source/changelog.rst>`_.
+
+For changes specific to this fork, see the `CHANGELOG.md <https://github.com/hunxa/codeigniter-3/blob/main/CHANGELOG.md>`_ file.
 
 *******************
 Server Requirements
@@ -50,8 +99,39 @@ issues, as well as missing features.
 Installation
 ************
 
-Please see the `installation section <https://codeigniter.com/userguide3/installation/index.html>`_
+### Via Composer
+
+```bash
+composer create-project hunxa/codeigniter-3 your-project-name
+```
+
+### Via Git Clone
+
+```bash
+git clone https://github.com/hunxa/codeigniter-3.git your-project-name
+cd your-project-name
+```
+
+### Manual Download
+
+Download the latest release from the `Releases page <https://github.com/hunxa/codeigniter-3/releases>`_
+and extract to your web server directory.
+
+For detailed installation instructions, see the `installation section <https://codeigniter.com/userguide3/installation/index.html>`_
 of the CodeIgniter User Guide.
+
+******************
+CI/CD Integration
+******************
+
+This repository includes GitHub Actions workflows for continuous integration:
+
+- Automatic PHP syntax validation
+- CodeIgniter structure verification
+- Security checks
+- Code quality analysis
+
+The CI pipeline runs automatically on every push to the main branch and on pull requests.
 
 *******
 License
@@ -65,18 +145,47 @@ Resources
 *********
 
 -  `User Guide <https://codeigniter.com/userguide3/>`_
--  `Contributing Guide <https://github.com/bcit-ci/CodeIgniter/blob/develop/contributing.md>`_
+-  `Contributing Guide <https://github.com/hunxa/codeigniter-3/blob/main/CONTRIBUTING.md>`_
 -  `Language File Translations <https://github.com/bcit-ci/codeigniter3-translations>`_
 -  `Community Forums <https://forum.codeigniter.com/>`_
 -  `Community Wiki <https://github.com/bcit-ci/CodeIgniter/wiki>`_
 -  `Community Slack Channel <https://codeigniterchat.slack.com>`_
 
-Report security issues to our `Security Panel <mailto:security@codeigniter.com>`_
-or via our `page on HackerOne <https://hackerone.com/codeigniter>`_, thank you.
+************
+Contributing
+************
+
+We welcome contributions! Please read our `Contributing Guide <https://github.com/hunxa/codeigniter-3/blob/main/CONTRIBUTING.md>`_
+before submitting pull requests.
+
+### Reporting Issues
+
+- For security issues, please report privately to the repository maintainer
+- For bugs and features, open an issue on `GitHub Issues <https://github.com/hunxa/codeigniter-3/issues>`_
+
+********
+Security
+********
+
+Report security issues to the repository maintainer or via our
+`Security page <https://github.com/hunxa/codeigniter-3/security>`_.
+
+For official CodeIgniter security issues, contact the `Security Panel <mailto:security@codeigniter.com>`_
+or via the `HackerOne page <https://hackerone.com/codeigniter>`_.
 
 ***************
 Acknowledgement
 ***************
 
 The CodeIgniter team would like to thank EllisLab, all the
-contributors to the CodeIgniter project and you, the CodeIgniter user.
+contributors to the CodeIgniter project, the original CodeIgniter team,
+and you, the CodeIgniter user.
+
+This fork is maintained by the community to keep CodeIgniter 3 alive and secure
+for projects that continue to rely on it.
+
+---
+
+**Repository:** https://github.com/hunxa/codeigniter-3  
+**Original Repository:** https://github.com/bcit-ci/CodeIgniter  
+**Maintained by:** hunxa
