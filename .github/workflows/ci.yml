@@ -16,10 +16,10 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: 7.4
-        extensions: mbstring, intl, mysqli, gd, zip, curl, xml
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y php php-cli php-mbstring php-intl php-mysqli php-gd php-zip php-curl php-xml
+        php -v
 
     - name: PHP Syntax Check
       run: |
