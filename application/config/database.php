@@ -1,5 +1,9 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+
+declare(strict_types=1);
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
 
 /*
 | -------------------------------------------------------------------
@@ -68,24 +72,24 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | make active.  By default there is only one group (the 'default' group).
 */
 $active_group = 'default';
-$db['default'] = array(
-	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => '',
-	'password' => '',
-	'database' => '',
-	'dbdriver' => 'mysqli',
-	'dbprefix' => '',
-	'pconnect' => FALSE,
-	'db_debug' => (ENVIRONMENT !== 'production'),
-	'cache_on' => FALSE,
-	'cachedir' => '',
-	'char_set' => 'utf8',
-	'dbcollat' => 'utf8_general_ci',
-	'swap_pre' => '',
-	'encrypt' => FALSE,
-	'compress' => FALSE,
-	'stricton' => FALSE,
-	'failover' => array(),
-	'save_queries' => TRUE
-);
+$db['default'] = [
+	'dsn' => env('DB_DSN', ''),
+	'hostname' => env('DB_HOSTNAME', 'localhost'),
+	'username' => env('DB_USERNAME', ''),
+	'password' => env('DB_PASSWORD', ''),
+	'database' => env('DB_DATABASE', ''),
+	'dbdriver' => env('DB_DRIVER', 'mysqli'),
+	'dbprefix' => env('DB_PREFIX', ''),
+	'pconnect' => env('DB_PCONNECT', false),
+	'db_debug' => env('DB_DEBUG', true),
+	'cache_on' => env('DB_CACHE_ON', false),
+	'cachedir' => env('DB_CACHE_DIR', ''),
+	'char_set' => env('DB_CHAR_SET', 'utf8'),
+	'dbcollat' => env('DB_COLLAT', 'utf8_general_ci'),
+	'swap_pre' => env('DB_SWAP_PRE', ''),
+	'encrypt' => env('DB_ENCRYPT', false),
+	'compress' => env('DB_COMPRESS', false),
+	'stricton' => env('DB_STRICT_ON', false),
+	'failover' => env('DB_FAILOVER', []),
+	'save_queries' => env('DB_SAVE_QUERIES', true)
+];
