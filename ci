@@ -1,0 +1,54 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * CodeIgniter CLI
+ * 
+ * @package CodeIgniter
+ * @subpackage CLI
+ * @category Command
+ * @author Your Name
+ */
+
+// Load Composer autoloader
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Load env helper
+require_once __DIR__ . '/system/helpers/env_helper.php';
+
+// Load bootstrap
+$bootstrap = require_once __DIR__ . '/system/cli/bootstrap.php';
+
+// Load commands registry
+$commands = require_once __DIR__ . '/application/config/commands.php';
+
+// Load CLI classes
+require_once __DIR__ . '/system/cli/CommandLoader.php';
+require_once __DIR__ . '/system/cli/CommandDiscovery.php';
+
+// Create instances
+$loader = new CommandLoader($commands, $bootstrap);
+$discovery = new CommandDiscovery($commands, $bootstrap);
+
+// Get command
+$command = $argv[1] ?? 'list';
+$args = array_slice($argv, 2);
+
+// Handle special commands
+if ($command === 'list') {
+    echo $discovery->generateHelp();
+    exit(0);
+}
+
+// Execute command
+try {
+    $loader->execute($command, $args);
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    if ($e->getMessage() === "Unknown command: {$command}") {
+        echo "Run 'php ci list' to see available commands.\n";
+    }
+    exit(1);
+}

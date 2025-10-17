@@ -1,478 +1,463 @@
 <?php
-/**
- * CodeIgniter
- *
- * An open source application development framework for PHP
- *
- * This content is released under the MIT License (MIT)
- *
- * Copyright (c) 2019 - 2022, CodeIgniter Foundation
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * @package	CodeIgniter
- * @author	EllisLab Dev Team
- * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc. (https://ellislab.com/)
- * @copyright	Copyright (c) 2014 - 2019, British Columbia Institute of Technology (https://bcit.ca/)
- * @copyright	Copyright (c) 2019 - 2022, CodeIgniter Foundation (https://codeigniter.com/)
- * @license	https://opensource.org/licenses/MIT	MIT License
- * @link	https://codeigniter.com
- * @since	Version 3.0.0
- * @filesource
- */
-defined('BASEPATH') OR exit('No direct script access allowed');
+
+declare(strict_types=1);
+
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
- * Migration Class
- *
- * All migrations should implement this, forces up() and down() and gives
- * access to the CI super-global.
- *
- * @package		CodeIgniter
- * @subpackage	Libraries
- * @category	Libraries
- * @author		Reactor Engineers
- * @link
+ * Migration System for CodeIgniter 3
+ * 
+ * Laravel-like migration system for database schema management
+ * 
+ * @package CodeIgniter
+ * @subpackage Libraries
+ * @category Migration
+ * @author Your Name
  */
-class CI_Migration {
-
+class CI_Migration
+{
 	/**
-	 * Whether the library is enabled
+	 * CI instance
 	 *
-	 * @var bool
+	 * @var object
 	 */
-	protected $_migration_enabled = FALSE;
+	protected $CI;
 
 	/**
-	 * Migration numbering type
+	 * Database connection
 	 *
-	 * @var	bool
+	 * @var object
 	 */
-	protected $_migration_type = 'sequential';
+	protected $db;
 
 	/**
-	 * Path to migration classes
+	 * Migration path
 	 *
 	 * @var string
 	 */
-	protected $_migration_path = NULL;
+	protected $migrationPath;
 
 	/**
-	 * Current migration version
-	 *
-	 * @var mixed
-	 */
-	protected $_migration_version = 0;
-
-	/**
-	 * Database table with migration info
+	 * Migration table
 	 *
 	 * @var string
 	 */
-	protected $_migration_table = 'migrations';
+	protected $migrationTable = 'migrations';
 
 	/**
-	 * Whether to automatically run migrations
-	 *
-	 * @var	bool
+	 * Constructor
 	 */
-	protected $_migration_auto_latest = FALSE;
-
-	/**
-	 * Migration basename regex
-	 *
-	 * @var string
-	 */
-	protected $_migration_regex;
-
-	/**
-	 * Error message
-	 *
-	 * @var string
-	 */
-	protected $_error_string = '';
-
-	/**
-	 * Initialize Migration Class
-	 *
-	 * @param	array	$config
-	 * @return	void
-	 */
-	public function __construct($config = array())
+	public function __construct()
 	{
-		// Only run this constructor on main library load
-		if ( ! in_array(get_class($this), array('CI_Migration', config_item('subclass_prefix').'Migration'), TRUE))
-		{
-			return;
-		}
+		$this->CI = get_instance();
+		$this->db = $this->CI->db;
+		$this->migrationPath = APPPATH . 'migrations/';
 
-		foreach ($config as $key => $val)
-		{
-			$this->{'_'.$key} = $val;
-		}
-
-		log_message('info', 'Migrations Class Initialized');
-
-		// Are they trying to use migrations while it is disabled?
-		if ($this->_migration_enabled !== TRUE)
-		{
-			show_error('Migrations has been loaded but is disabled or set up incorrectly.');
-		}
-
-		// If not set, set it
-		$this->_migration_path !== '' OR $this->_migration_path = APPPATH.'migrations/';
-
-		// Add trailing slash if not set
-		$this->_migration_path = rtrim($this->_migration_path, '/').'/';
-
-		// Load migration language
-		$this->lang->load('migration');
-
-		// They'll probably be using dbforge
-		$this->load->dbforge();
-
-		// Make sure the migration table name was set.
-		if (empty($this->_migration_table))
-		{
-			show_error('Migrations configuration file (migration.php) must have "migration_table" set.');
-		}
-
-		// Migration basename regex
-		$this->_migration_regex = ($this->_migration_type === 'timestamp')
-			? '/^\d{14}_(\w+)$/'
-			: '/^\d{3}_(\w+)$/';
-
-		// Make sure a valid migration numbering type was set.
-		if ( ! in_array($this->_migration_type, array('sequential', 'timestamp')))
-		{
-			show_error('An invalid migration numbering type was specified: '.$this->_migration_type);
-		}
-
-		// If the migrations table is missing, make it
-		if ( ! $this->db->table_exists($this->_migration_table))
-		{
-			$this->dbforge->add_field(array(
-				'version' => array('type' => 'BIGINT', 'constraint' => 20),
-			));
-
-			$this->dbforge->create_table($this->_migration_table, TRUE);
-
-			$this->db->insert($this->_migration_table, array('version' => 0));
-		}
-
-		// Do we auto migrate to the latest migration?
-		if ($this->_migration_auto_latest === TRUE && ! $this->latest())
-		{
-			show_error($this->error_string());
-		}
+		// Create migrations table if it doesn't exist
+		$this->createMigrationsTable();
 	}
 
-	// --------------------------------------------------------------------
-
 	/**
-	 * Migrate to a schema version
+	 * Run all pending migrations
 	 *
-	 * Calls each migration step required to get to the schema version of
-	 * choice
-	 *
-	 * @param	string	$target_version	Target schema version
-	 * @return	mixed	TRUE if no migrations are found, current version string on success, FALSE on failure
+	 * @return array
 	 */
-	public function version($target_version)
+	public function migrate(): array
 	{
-		// Note: We use strings, so that timestamp versions work on 32-bit systems
-		$current_version = $this->_get_version();
+		$migrations = $this->getPendingMigrations();
+		$run = [];
 
-		if ($this->_migration_type === 'sequential')
-		{
-			$target_version = sprintf('%03d', $target_version);
-		}
-		else
-		{
-			$target_version = (string) $target_version;
-		}
+		foreach ($migrations as $migration) {
+			echo "Running migration: {$migration}\n";
 
-		$migrations = $this->find_migrations();
-
-		if ($target_version > 0 && ! isset($migrations[$target_version]))
-		{
-			$this->_error_string = sprintf($this->lang->line('migration_not_found'), $target_version);
-			return FALSE;
-		}
-
-		if ($target_version > $current_version)
-		{
-			$method = 'up';
-		}
-		elseif ($target_version < $current_version)
-		{
-			$method = 'down';
-			// We need this so that migrations are applied in reverse order
-			krsort($migrations);
-		}
-		else
-		{
-			// Well, there's nothing to migrate then ...
-			return TRUE;
-		}
-
-		// Validate all available migrations within our target range.
-		//
-		// Unfortunately, we'll have to use another loop to run them
-		// in order to avoid leaving the procedure in a broken state.
-		//
-		// See https://github.com/bcit-ci/CodeIgniter/issues/4539
-		$pending = array();
-		foreach ($migrations as $number => $file)
-		{
-			// Ignore versions out of our range.
-			//
-			// Because we've previously sorted the $migrations array depending on the direction,
-			// we can safely break the loop once we reach $target_version ...
-			if ($method === 'up')
-			{
-				if ($number <= $current_version)
-				{
-					continue;
-				}
-				elseif ($number > $target_version)
-				{
-					break;
+			$migrationClass = $this->loadMigration($migration);
+			if ($migrationClass) {
+				try {
+					$migrationClass->up();
+					$this->recordMigration($migration);
+					$run[] = $migration;
+					echo "✓ Migration {$migration} completed\n";
+				} catch (Exception $e) {
+					echo "✗ Migration {$migration} failed: " . $e->getMessage() . "\n";
+					throw $e;
 				}
 			}
-			else
-			{
-				if ($number > $current_version)
-				{
-					continue;
-				}
-				elseif ($number <= $target_version)
-				{
-					break;
-				}
-			}
-
-			// Check for sequence gaps
-			if ($this->_migration_type === 'sequential')
-			{
-				if (isset($previous) && abs($number - $previous) > 1)
-				{
-					$this->_error_string = sprintf($this->lang->line('migration_sequence_gap'), $number);
-					return FALSE;
-				}
-
-				$previous = $number;
-			}
-
-			include_once($file);
-			$class = 'Migration_'.ucfirst(strtolower($this->_get_migration_name(basename($file, '.php'))));
-
-			// Validate the migration file structure
-			if ( ! class_exists($class, FALSE))
-			{
-				$this->_error_string = sprintf($this->lang->line('migration_class_doesnt_exist'), $class);
-				return FALSE;
-			}
-			elseif ( ! method_exists($class, $method) OR ! (new ReflectionMethod($class, $method))->isPublic())
-			{
-				$this->_error_string = sprintf($this->lang->line('migration_missing_'.$method.'_method'), $class);
-				return FALSE;
-			}
-
-			$pending[$number] = array($class, $method);
 		}
 
-		// Now just run the necessary migrations
-		foreach ($pending as $number => $migration)
-		{
-			log_message('debug', 'Migrating '.$method.' from version '.$current_version.' to version '.$number);
-
-			$migration[0] = new $migration[0];
-			call_user_func($migration);
-			$current_version = $number;
-			$this->_update_version($current_version);
-		}
-
-		// This is necessary when moving down, since the the last migration applied
-		// will be the down() method for the next migration up from the target
-		if ($current_version <> $target_version)
-		{
-			$current_version = $target_version;
-			$this->_update_version($current_version);
-		}
-
-		log_message('debug', 'Finished migrating to '.$current_version);
-		return $current_version;
+		return $run;
 	}
 
-	// --------------------------------------------------------------------
-
 	/**
-	 * Sets the schema to the latest migration
+	 * Rollback the last batch of migrations
 	 *
-	 * @return	mixed	Current version string on success, FALSE on failure
+	 * @param int $steps Number of steps to rollback
+	 * @return array
 	 */
-	public function latest()
+	public function rollback(int $steps = 1): array
 	{
-		$migrations = $this->find_migrations();
+		$migrations = $this->getLastBatchMigrations($steps);
+		$rolledBack = [];
 
-		if (empty($migrations))
-		{
-			$this->_error_string = $this->lang->line('migration_none_found');
-			return FALSE;
+		foreach (array_reverse($migrations) as $migration) {
+			echo "Rolling back migration: {$migration}\n";
+
+			$migrationClass = $this->loadMigration($migration);
+			if ($migrationClass) {
+				try {
+					$migrationClass->down();
+					$this->removeMigration($migration);
+					$rolledBack[] = $migration;
+					echo "✓ Migration {$migration} rolled back\n";
+				} catch (Exception $e) {
+					echo "✗ Migration {$migration} rollback failed: " . $e->getMessage() . "\n";
+					throw $e;
+				}
+			}
 		}
 
-		$last_migration = basename(end($migrations));
-
-		// Calculate the last migration step from existing migration
-		// filenames and proceed to the standard version migration
-		return $this->version($this->_get_migration_number($last_migration));
+		return $rolledBack;
 	}
 
-	// --------------------------------------------------------------------
-
 	/**
-	 * Sets the schema to the migration version set in config
+	 * Reset all migrations
 	 *
-	 * @return	mixed	TRUE if no migrations are found, current version string on success, FALSE on failure
+	 * @return array
 	 */
-	public function current()
+	public function reset(): array
 	{
-		return $this->version($this->_migration_version);
-	}
+		$migrations = $this->getAllMigrations();
+		$reset = [];
 
-	// --------------------------------------------------------------------
+		foreach (array_reverse($migrations) as $migration) {
+			echo "Resetting migration: {$migration}\n";
 
-	/**
-	 * Error string
-	 *
-	 * @return	string	Error message returned as a string
-	 */
-	public function error_string()
-	{
-		return $this->_error_string;
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Retrieves list of available migration scripts
-	 *
-	 * @return	array	list of migration file paths sorted by version
-	 */
-	public function find_migrations()
-	{
-		$migrations = array();
-
-		// Load all *_*.php files in the migrations path
-		foreach (glob($this->_migration_path.'*_*.php') as $file)
-		{
-			$name = basename($file, '.php');
-
-			// Filter out non-migration files
-			if (preg_match($this->_migration_regex, $name))
-			{
-				$number = $this->_get_migration_number($name);
-
-				// There cannot be duplicate migration numbers
-				if (isset($migrations[$number]))
-				{
-					$this->_error_string = sprintf($this->lang->line('migration_multiple_version'), $number);
-					show_error($this->_error_string);
+			$migrationClass = $this->loadMigration($migration);
+			if ($migrationClass) {
+				try {
+					$migrationClass->down();
+					$this->removeMigration($migration);
+					$reset[] = $migration;
+					echo "✓ Migration {$migration} reset\n";
+				} catch (Exception $e) {
+					echo "✗ Migration {$migration} reset failed: " . $e->getMessage() . "\n";
+					throw $e;
 				}
+			}
+		}
 
-				$migrations[$number] = $file;
+		return $reset;
+	}
+
+	/**
+	 * Refresh migrations (reset and migrate)
+	 *
+	 * @return array
+	 */
+	public function refresh(): array
+	{
+		echo "Resetting all migrations...\n";
+		$this->reset();
+
+		echo "Running all migrations...\n";
+		return $this->migrate();
+	}
+
+	/**
+	 * Show migration status
+	 *
+	 * @return void
+	 */
+	public function status(): void
+	{
+		$pending = $this->getPendingMigrations();
+		$ran = $this->getRanMigrations();
+
+		echo "Migration Status:\n";
+		echo "================\n";
+		echo "Pending: " . count($pending) . " migrations\n";
+		echo "Ran: " . count($ran) . " migrations\n\n";
+
+		if (!empty($pending)) {
+			echo "Pending migrations:\n";
+			foreach ($pending as $migration) {
+				echo "  - {$migration}\n";
 			}
 		}
 
-		ksort($migrations);
-		return $migrations;
+		if (!empty($ran)) {
+			echo "\nRan migrations:\n";
+			foreach ($ran as $migration) {
+				echo "  ✓ {$migration}\n";
+			}
+		}
 	}
-
-	// --------------------------------------------------------------------
 
 	/**
-	 * Extracts the migration number from a filename
+	 * Create a new migration file
 	 *
-	 * @param	string	$migration
-	 * @return	string	Numeric portion of a migration filename
+	 * @param string $name Migration name
+	 * @return string
 	 */
-	protected function _get_migration_number($migration)
+	public function make(string $name): string
 	{
-		return sscanf($migration, '%[0-9]+', $number)
-			? $number : '0';
-	}
+		$timestamp = date('Y_m_d_His');
+		$className = $this->getMigrationClassName($name);
+		$filename = $timestamp . '_' . $name . '.php';
+		$filepath = $this->migrationPath . $filename;
 
-	// --------------------------------------------------------------------
+		$content = $this->getMigrationTemplate($className);
+
+		if (file_put_contents($filepath, $content)) {
+			echo "Created migration: {$filename}\n";
+			return $filename;
+		} else {
+			throw new Exception("Failed to create migration file: {$filename}");
+		}
+	}
 
 	/**
-	 * Extracts the migration class name from a filename
+	 * Get pending migrations
 	 *
-	 * @param	string	$migration
-	 * @return	string	text portion of a migration filename
+	 * @return array
 	 */
-	protected function _get_migration_name($migration)
+	protected function getPendingMigrations(): array
 	{
-		$parts = explode('_', $migration);
-		array_shift($parts);
-		return implode('_', $parts);
-	}
+		$files = $this->getMigrationFiles();
+		$ran = $this->getRanMigrations();
 
-	// --------------------------------------------------------------------
+		return array_diff($files, $ran);
+	}
 
 	/**
-	 * Retrieves current schema version
+	 * Get all migration files
 	 *
-	 * @return	string	Current migration version
+	 * @return array
 	 */
-	protected function _get_version()
+	protected function getMigrationFiles(): array
 	{
-		$row = $this->db->select('version')->get($this->_migration_table)->row();
-		return $row ? $row->version : '0';
-	}
+		$files = [];
+		$path = $this->migrationPath;
 
-	// --------------------------------------------------------------------
+		if (is_dir($path)) {
+			$files = array_diff(scandir($path), ['.', '..']);
+			$files = array_filter($files, function ($file) {
+				return pathinfo($file, PATHINFO_EXTENSION) === 'php';
+			});
+			sort($files);
+		}
+
+		return $files;
+	}
 
 	/**
-	 * Stores the current schema version
+	 * Get ran migrations
 	 *
-	 * @param	string	$migration	Migration reached
-	 * @return	void
+	 * @return array
 	 */
-	protected function _update_version($migration)
+	protected function getRanMigrations(): array
 	{
-		$this->db->update($this->_migration_table, array(
-			'version' => $migration
-		));
-	}
+		$this->db->select('migration');
+		$this->db->order_by('id', 'ASC');
+		$query = $this->db->get($this->migrationTable);
 
-	// --------------------------------------------------------------------
+		return array_column($query->result_array(), 'migration');
+	}
 
 	/**
-	 * Enable the use of CI super-global
+	 * Get last batch migrations
 	 *
-	 * @param	string	$var
-	 * @return	mixed
+	 * @param int $steps Number of steps
+	 * @return array
 	 */
-	public function __get($var)
+	protected function getLastBatchMigrations(int $steps): array
 	{
-		return get_instance()->$var;
+		$this->db->select('migration');
+		$this->db->order_by('id', 'DESC');
+		$this->db->limit($steps);
+		$query = $this->db->get($this->migrationTable);
+
+		return array_column($query->result_array(), 'migration');
 	}
 
+	/**
+	 * Get all migrations
+	 *
+	 * @return array
+	 */
+	protected function getAllMigrations(): array
+	{
+		return $this->getRanMigrations();
+	}
+
+	/**
+	 * Load migration class
+	 *
+	 * @param string $migration Migration filename
+	 * @return object|null
+	 */
+	protected function loadMigration(string $migration)
+	{
+		$filepath = $this->migrationPath . $migration;
+
+		if (!file_exists($filepath)) {
+			return null;
+		}
+
+		require_once $filepath;
+
+		$className = $this->getMigrationClassName($migration);
+
+		if (class_exists($className)) {
+			return new $className();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get migration class name from filename
+	 *
+	 * @param string $filename Migration filename
+	 * @return string
+	 */
+	protected function getMigrationClassName(string $filename): string
+	{
+		$name = pathinfo($filename, PATHINFO_FILENAME);
+		$name = preg_replace('/^\d+_\d+_\d+_\d+_/', '', $name);
+		$name = str_replace('_', ' ', $name);
+		$name = ucwords($name);
+		$name = str_replace(' ', '', $name);
+
+		return $name;
+	}
+
+	/**
+	 * Record migration as run
+	 *
+	 * @param string $migration Migration filename
+	 * @return void
+	 */
+	protected function recordMigration(string $migration): void
+	{
+		$this->db->insert($this->migrationTable, [
+			'migration' => $migration,
+			'batch' => $this->getNextBatchNumber()
+		]);
+	}
+
+	/**
+	 * Remove migration record
+	 *
+	 * @param string $migration Migration filename
+	 * @return void
+	 */
+	protected function removeMigration(string $migration): void
+	{
+		$this->db->where('migration', $migration);
+		$this->db->delete($this->migrationTable);
+	}
+
+	/**
+	 * Get next batch number
+	 *
+	 * @return int
+	 */
+	protected function getNextBatchNumber(): int
+	{
+		$this->db->select_max('batch');
+		$query = $this->db->get($this->migrationTable);
+		$result = $query->row();
+
+		return ($result->batch ?? 0) + 1;
+	}
+
+	/**
+	 * Create migrations table
+	 *
+	 * @return void
+	 */
+	protected function createMigrationsTable(): void
+	{
+		$this->db->query("
+            CREATE TABLE IF NOT EXISTS `{$this->migrationTable}` (
+                `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+                `migration` varchar(255) NOT NULL,
+                `batch` int(11) NOT NULL,
+                PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+	}
+
+	/**
+	 * Get migration template
+	 *
+	 * @param string $className Class name
+	 * @return string
+	 */
+	protected function getMigrationTemplate(string $className): string
+	{
+		return "<?php
+
+declare(strict_types=1);
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+/**
+ * Migration: {$className}
+ * 
+ * @package CodeIgniter
+ * @subpackage Migrations
+ * @category Database
+ * @author Your Name
+ */
+class {$className}
+{
+    /**
+     * CI instance
+     *
+     * @var object
+     */
+    protected \$CI;
+
+    /**
+     * Database connection
+     *
+     * @var object
+     */
+    protected \$db;
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        \$this->CI =& get_instance();
+        \$this->db = \$this->CI->db;
+    }
+
+    /**
+     * Run the migrations
+     *
+     * @return void
+     */
+    public function up(): void
+    {
+        // Add your migration code here
+        // Example:
+        // \$this->db->query('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))');
+    }
+
+    /**
+     * Reverse the migrations
+     *
+     * @return void
+     */
+    public function down(): void
+    {
+        // Add your rollback code here
+        // Example:
+        // \$this->db->query('DROP TABLE users');
+    }
+}";
+	}
 }

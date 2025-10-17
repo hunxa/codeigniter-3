@@ -25,7 +25,8 @@
 		"classmap": [
 			"application/controllers",
 			"application/models",
-			"application/libraries"
+			"application/libraries",
+			"application/commands"
 		]
 	},
 	"scripts": {
