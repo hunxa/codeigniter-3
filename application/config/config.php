@@ -315,7 +315,7 @@ $config['cache_query_string'] = env('CACHE_QUERY_STRING', false);
 | https://codeigniter.com/userguide3/libraries/encryption.html
 |
 */
-$config['encryption_key'] = env('APP_KEY', '');
+$config['encryption_key'] = env('APP_KEY', 'your-32-character-secret-key-here!');
 
 /*
 |--------------------------------------------------------------------------
@@ -376,7 +376,7 @@ $config['sess_driver'] = env('SESSION_DRIVER', 'files');
 $config['sess_cookie_name'] = env('SESSION_COOKIE_NAME', str_replace(' ', '-', strtolower(env('APP_NAME', 'CodeIgniter'))) . '_session');
 $config['sess_samesite'] = env('SESSION_SAMESITE', 'Lax');
 $config['sess_expiration'] = (int) env('SESSION_EXPIRATION', 7200);
-$config['sess_save_path'] = env('SESSION_SAVE_PATH', null);
+$config['sess_save_path'] = env('SESSION_SAVE_PATH', APPPATH . 'cache/sessions/');
 $config['sess_match_ip'] = env('SESSION_MATCH_IP', false);
 $config['sess_time_to_update'] = (int) env('SESSION_TIME_TO_UPDATE', 300);
 $config['sess_regenerate_destroy'] = env('SESSION_REGENERATE_DESTROY', false);
@@ -422,7 +422,7 @@ $config['csrf_protection'] = env('CSRF_PROTECTION', false);
 $config['csrf_token_name'] = env('CSRF_TOKEN_NAME', 'csrf_test_name');
 $config['csrf_cookie_name'] = env('CSRF_COOKIE_NAME', 'csrf_cookie_name');
 $config['csrf_expire'] = (int) env('CSRF_EXPIRE', 7200);
-$config['csrf_regenerate'] = env('CSRF_REGENERATE', true);
+$config['csrf_regenerate'] = env('CSRF_REGENERATE', false);
 $config['csrf_exclude_uris'] = env('CSRF_EXCLUDE_URIS', []);
 
 /*
